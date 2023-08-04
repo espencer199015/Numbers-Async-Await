@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<title>Random Pokemon</title>
+</head>
+<body>
+<button id="random-pokemon-btn">Generate Random Pokemon</button>
+<div id="pokemon-container"></div>
+
+<script>
+    // Function to fetch all the names and URLs of every Pokemon in the database
+    function fetchAllPokemon() {
+    return fetch('https://pokeapi.co/api/v2/pokemon/?limit=1000')
+        .then(response => response.json())
+        .then(data => data.results)
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Function to pick three random Pokemon from the list
+    function pickRandomThree(pokemonList) {
+    const randomPokemon = [];
+    for (let i = 0; i < 3; i++) {
+        const randomIndex = Math.floor(Math.random() * pokemonList.length);
+        randomPokemon.push(pokemonList[randomIndex]);
+    }
+    return randomPokemon;
+    }
+
+    // Function to fetch data for a specific Pokemon using its URL
+    function fetchPokemonData(url) {
+    return fetch(url)
+        .then(response => response.json())
+        .then(data => {
+        const name = data.name;
+        const imageUrl = data.sprites.front_default;
+        const speciesURL = data.species.url;
+        fetchPokemonSpeciesData(name, imageUrl, speciesURL);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Function to fetch species data for a specific Pokemon using its species URL
+    function fetchPokemonSpeciesData(name, imageUrl, speciesURL) {
+    return fetch(speciesURL)
+        .then(response => response.json())
+        .then(data => {
+        const description = data.flavor_text_entries.find(entry => entry.language.name === 'en').flavor_text;
+        displayPokemonData(name, imageUrl, description);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Function to display Pokemon data on the HTML page
+    function displayPokemonData(name, imageUrl, description) {
+    const pokemonContainer = document.getElementById('pokemon-container');
+    const pokemonElement = document.createElement('div');
+    const nameElement = document.createElement('h3');
+    const imageElement = document.createElement('img');
+    const descriptionElement = document.createElement('p');
+
+    nameElement.textContent = name;
+    imageElement.src = imageUrl;
+    descriptionElement.textContent = description;
+
+    pokemonElement.appendChild(nameElement);
+    pokemonElement.appendChild(imageElement);
+    pokemonElement.appendChild(descriptionElement);
+
+    pokemonContainer.appendChild(pokemonElement);
+    }
+
+    // Function to handle the button click event and generate random Pokemon data
+    function generateRandomPokemonData() {
+    fetchAllPokemon()
+        .then(pokemonList => {
+        const randomPokemon = pickRandomThree(pokemonList);
+        randomPokemon.forEach(pokemon => {
+            fetchPokemonData(pokemon.url);
+        });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Add click event listener to the button
+    const randomPokemonButton = document.getElementById('random-pokemon-btn');
+    randomPokemonButton.addEventListener('click', generateRandomPokemonData);
+</script>
+</body>
+</html>
